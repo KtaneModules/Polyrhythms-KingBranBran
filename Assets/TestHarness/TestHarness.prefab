@@ -20171,7 +20171,7 @@ MonoBehaviour:
   FrontFaceOnly: 1
   EdgeworkConfiguration: {fileID: 0}
   TwitchPlaysActive: 1
-  TwitchPlaysMode: 2
+  TwitchPlaysMode: 0
   turnSpeed: 128
   panSpeed: 4
   zoomSpeed: 16
