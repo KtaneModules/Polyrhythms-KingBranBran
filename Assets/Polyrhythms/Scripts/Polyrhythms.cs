@@ -282,7 +282,6 @@ public class Polyrhythms : MonoBehaviour
         {
 			if (input[0] != currentSolution[0])
             {
-				StopAllCoroutines();
 				DebugLog("Module solved!");
 				audio.PlaySoundAtTransform("solve", transform);
 				solved = true;
@@ -290,21 +289,17 @@ public class Polyrhythms : MonoBehaviour
 				while (!realSolve) yield return true;
 				yield break;
             }
-			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { if (!submitting) break; yield return null; }
-			if (submitting)
-            {
-				button.OnInteractEnded();
-				yield return new WaitForSeconds(0.05f);
-			}
-        }
+			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
+			button.OnInteractEnded();
+			yield return new WaitForSeconds(0.05f);
+		}
 		else if (submitting && input == null)
 		{
 			while (!LastDigitOfTimerIsSame(currentSolution[0].ToString())) { if (!submitting) break; yield return null; }
 			if (submitting)
-				button.OnInteract();
-			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { if (!submitting) break; yield return null; }
-			if (submitting)
             {
+				button.OnInteract();
+				while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
 				button.OnInteractEnded();
 				yield return new WaitForSeconds(0.05f);
 			}
@@ -317,7 +312,7 @@ public class Polyrhythms : MonoBehaviour
 			while (playing) yield return null;
 			while (!LastDigitOfTimerIsSame(currentSolution[0].ToString())) { yield return null; }
 			button.OnInteract();
-			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return null; }
+			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
 			button.OnInteractEnded();
 			yield return new WaitForSeconds(0.05f);
 		}
