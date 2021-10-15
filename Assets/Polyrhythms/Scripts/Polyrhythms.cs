@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -29,6 +27,7 @@ public class Polyrhythms : MonoBehaviour
 	private bool submitting;
 	private bool playing;
 	private bool solved;
+	private bool realSolve;
 
 	private Coroutine submitModeTimerCoroutine;
 	
@@ -152,10 +151,20 @@ public class Polyrhythms : MonoBehaviour
 	IEnumerator SubmitModeTimer()
 	{
 		const float SUBMIT_MODE_TIME = 12f;
-		var targetTime = edgework.GetTime() + SUBMIT_MODE_TIME;
-		if (TwitchPlaysActive)
-			targetTime += 10f;
-		yield return new WaitUntil(() => edgework.GetTime() > targetTime);
+		if (ZenModeActive)
+        {
+			var targetTime = edgework.GetTime() + SUBMIT_MODE_TIME;
+			if (TwitchPlaysActive)
+				targetTime += 10f;
+			yield return new WaitUntil(() => edgework.GetTime() > targetTime);
+		}
+        else
+        {
+			var targetTime = edgework.GetTime() - SUBMIT_MODE_TIME;
+			if (TwitchPlaysActive)
+				targetTime -= 10f;
+			yield return new WaitUntil(() => edgework.GetTime() < targetTime);
+		}
 		submitting = false;
 		if (amountCorrect > 0)
 			amountCorrect--;
@@ -179,12 +188,14 @@ public class Polyrhythms : MonoBehaviour
 		
 		yield return new WaitForSeconds(measure);
 
+		realSolve = true;
 		module.HandlePass();
 		animator.Pulse(measure * 4, (int) Symbols.Star, Color.yellow);
 	}
 	
 	string TwitchHelpMessage = "'!{0} play/p' -> Play the polyrhythm. '!{0} submit/s [number] [number]' -> Submit the polyrhythm. '!{0} hold/h [number]' -> Holds the button on that number. '{0} release/r [number]' -> Releases the button on that number. The time to submit an answer is increased by 10 seconds.";
 	bool TwitchPlaysActive;
+	bool ZenModeActive;
 	
 	IEnumerator ProcessTwitchCommand(string command)
 	{
@@ -263,5 +274,48 @@ public class Polyrhythms : MonoBehaviour
 					break;
 			}
 		}
+	}
+
+	IEnumerator TwitchHandleForcedSolve()
+    {
+		if (submitting && input != null)
+        {
+			if (input[0] != currentSolution[0])
+            {
+				DebugLog("Module solved!");
+				audio.PlaySoundAtTransform("solve", transform);
+				solved = true;
+				StartCoroutine(SolveAnimation());
+				while (!realSolve) yield return true;
+				yield break;
+            }
+			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
+			button.OnInteractEnded();
+			yield return new WaitForSeconds(0.05f);
+		}
+		else if (submitting && input == null)
+		{
+			while (!LastDigitOfTimerIsSame(currentSolution[0].ToString())) { if (!submitting) break; yield return null; }
+			if (submitting)
+            {
+				button.OnInteract();
+				while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
+				button.OnInteractEnded();
+				yield return new WaitForSeconds(0.05f);
+			}
+		}
+		int start = amountCorrect;
+		for (int i = start; i < 3; i++)
+        {
+			if (!playing)
+				button.OnInteract();
+			while (playing) yield return null;
+			while (!LastDigitOfTimerIsSame(currentSolution[0].ToString())) { yield return null; }
+			button.OnInteract();
+			while (!LastDigitOfTimerIsSame(currentSolution[1].ToString())) { yield return true; }
+			button.OnInteractEnded();
+			yield return new WaitForSeconds(0.05f);
+		}
+		while (!realSolve) yield return true;
 	}
 }
