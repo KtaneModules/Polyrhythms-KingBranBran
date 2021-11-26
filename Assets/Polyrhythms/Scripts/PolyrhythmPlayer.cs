@@ -51,7 +51,7 @@ public class PolyrhythmPlayer : MonoBehaviour
 
 	IEnumerator PlayRhythm(int number, float time)
 	{
-		var sound = number < 0 ? "lower" : "higher";
+		var sound = number < 0 ? "lower new" : "higher new";
 		number *= number < 0 ? -1 : 1;
 		var targetTimes = Enumerable.Range(1, number).Select(n => time * n / number).ToList();
 		
